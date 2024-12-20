@@ -1,0 +1,88 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container my-4">
+    <h2>Панель Менеджера</h2>
+
+    <!-- Утвержденные бронирования -->
+    <h3 class="mt-4">Утвержденные бронирования</h3>
+    {% if approved_bookings %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Телефон</th>
+                    <th>Имя</th>
+                    <th>Столик</th>
+                    <th>Дата</th>
+                    <th>Время от</th>
+                    <th>Время до</th>
+                    <th>Гости</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in approved_bookings %}
+                    <tr>
+                        <td>{{ booking.user.email }}</td>
+                        <td>{{ booking.user.phone }}</td>
+                        <td>{{ booking.user.first_name }}</td>
+                        <td>{{ booking.table.name }}</td>
+                        <td>{{ booking.date }}</td>
+                        <td>{{ booking.time_from }}</td>
+                        <td>{{ booking.time_to }}</td>
+                        <td>{{ booking.guests_count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Нет утвержденных бронирований.</p>
+    {% endif %}
+
+    <!-- Ожидающие бронирования -->
+    <h3 class="mt-5">Ожидающие бронирования</h3>
+    {% if pending_bookings %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Телефон</th>
+                    <th>Имя</th>
+                    <th>Столик</th>
+                    <th>Дата</th>
+                    <th>Время от</th>
+                    <th>Время до</th>
+                    <th>Гости</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in pending_bookings %}
+                    <tr>
+                        <td>{{ booking.user.username }}</td>
+                        <td>{{ booking.user.phone }}</td>
+                        <td>{{ booking.user.first_name }}</td>
+                        <td>{{ booking.table.name }}</td>
+                        <td>{{ booking.date }}</td>
+                        <td>{{ booking.time_from }}</td>
+                        <td>{{ booking.time_to }}</td>
+                        <td>{{ booking.guests_count }}</td>
+                        <td>
+                            <form method="post" action="{% url 'booking:confirm_booking' booking.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">Подтвердить</button>
+                            </form>
+                            <form method="post" action="{% url 'booking:reject_booking' booking.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Отклонить</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Нет ожидающих бронирований.</p>
+    {% endif %}
+</div>
+{% endblock %}

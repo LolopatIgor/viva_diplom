@@ -1,0 +1,149 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    body {
+        color: white;
+    }
+    #outer-container {
+        background-color: black;
+        position: relative;
+        width:100%;
+        margin:0 auto;
+        overflow:hidden;
+        border: 1px solid #ddd;
+        height: 600px; /* можно задать фиксированную высоту или адаптировать под нужды */
+    }
+    #plan-container {
+        position: absolute; /* чтобы удобно было трансформировать */
+        width: 1000px;
+        height: 600px;
+        background-image: url('{% static "img/restaurant_layout.png" %}');
+        background-color: black;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        cursor: grab;
+    }
+</style>
+
+<div class="container my-4">
+    <h2 class="mb-4 text-center">Выберите столик на плане</h2>
+
+    <div class="text-center mb-3">
+        <button id="zoom-in" class="btn btn-secondary">+</button>
+        <button id="zoom-out" class="btn btn-secondary">-</button>
+        <button id="reset" class="btn btn-secondary">Сброс</button>
+    </div>
+
+    <div id="outer-container">
+        <div id="plan-container">
+            {% for table in tables %}
+            <a href="{% url 'booking:book_table' table.id %}"
+               style="
+        position:absolute;
+        top:{{ table.y_coord }}px;
+        left:{{ table.x_coord }}px;
+        transform:translate(-50%, -50%);
+        text-align:center;
+        text-decoration: none;
+    "
+               title="Столик: {{ table.name }} ({{ table.capacity }} чел.)">
+                <img src="{% static 'img/table_icon.png' %}" alt="{{ table.name }}" style="width:50px; height:auto;">
+                <div style="font-size:12px; color:black; margin-top:1px;">
+                    {{ table.name }} ({{ table.capacity }} чел.)
+                </div>
+            </a>
+
+
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        const planContainer = document.getElementById('plan-container');
+
+        let currentScale = 1;
+        const scaleStep = 0.1;
+        const maxScale = 2;
+        const minScale = 0.5;
+
+        // Переменные для панорамирования
+        let panX = 0;
+        let panY = 0;
+
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const resetBtn = document.getElementById('reset');
+
+        function applyTransform() {
+            planContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${currentScale})`;
+        }
+
+        zoomInBtn.addEventListener('click', function(){
+            if (currentScale < maxScale) {
+                currentScale += scaleStep;
+                applyTransform();
+            }
+        });
+
+        zoomOutBtn.addEventListener('click', function(){
+            if (currentScale > minScale) {
+                currentScale -= scaleStep;
+                applyTransform();
+            }
+        });
+
+        resetBtn.addEventListener('click', function(){
+            currentScale = 1;
+            panX = 0;
+            panY = 0;
+            applyTransform();
+        });
+
+        let isDragging = false;
+        let startX, startY;
+        let initialPanX, initialPanY;
+
+        planContainer.addEventListener('mousedown', function(e) {
+            if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'img') {
+                // Если клик по столику, не двигаем план
+                return;
+            }
+            isDragging = true;
+            planContainer.style.cursor = 'grabbing';
+
+            startX = e.clientX;
+            startY = e.clientY;
+            initialPanX = panX;
+            initialPanY = panY;
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            // Меняем panX и panY
+            panX = initialPanX + deltaX;
+            panY = initialPanY + deltaY;
+
+            applyTransform();
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            if (isDragging) {
+                isDragging = false;
+                planContainer.style.cursor = 'grab';
+            }
+        });
+
+        // Применяем начальные трансформации
+        applyTransform();
+    })();
+</script>
+{% endblock %}

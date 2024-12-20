@@ -1,0 +1,45 @@
+{% load group_tags %}
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+    <h5 class="my-0 mr-md-auto font-weight-normal">Viva</h5>
+    <nav class="ms-5">
+        <ul class="nav">
+            {% if user.is_authenticated %}
+            <!-- Кнопка "Личный Кабинет" -->
+            <li class="nav-item">
+                <a class="p-2 btn btn-outline-primary" href="{% url 'booking:user_profile' %}">Личный Кабинет</a>
+            </li>
+
+            <!-- Кнопка "Подтверждения бронирований" для менеджеров -->
+            {% if user|has_group:"Manager" %}
+            <li class="nav-item">
+                <a class="p-2 btn btn-outline-primary" href="{% url 'booking:manager_dashboard' %}">Подтверждения
+                    бронирований</a>
+            </li>
+            {% endif %}
+
+            <!-- Кнопка "Выйти" -->
+            <li class="nav-item">
+                <form action="{% url 'users:logout' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary p-2">Выйти</button>
+                </form>
+            </li>
+            {% else %}
+            <!-- Кнопка "Войти" -->
+            <li class="nav-item">
+                <a class="p-2 btn btn-outline-primary" href="{% url 'users:login' %}">Войти</a>
+            </li>
+
+            <!-- Кнопка "Регистрация" -->
+            <li class="nav-item">
+                <a class="p-2 btn btn-outline-primary" href="{% url 'users:register' %}">Регистрация</a>
+            </li>
+            {% endif %}
+
+            <!-- Кнопка "Бронирование" доступна всем пользователям -->
+            <li class="nav-item">
+                <a class="p-2 btn btn-outline-primary" href="{% url 'booking:booking_list' %}">Бронирование</a>
+            </li>
+        </ul>
+    </nav>
+</div>

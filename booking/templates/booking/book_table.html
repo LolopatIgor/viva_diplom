@@ -1,0 +1,100 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container my-4">
+    <h2>Бронирование столика: {{ table.name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_date" class="form-label">Дата</label>
+            {{ form.date }}
+            {% if form.date.errors %}
+                <div class="text-danger">{{ form.date.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="time-from" class="form-label">Время от</label>
+            <select id="time-from" name="time_from" class="form-select">
+                <option value="">Сначала выберите дату</option>
+            </select>
+            {% if form.time_from.errors %}
+                <div class="text-danger">{{ form.time_from.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="time-to" class="form-label">Время до</label>
+            <select id="time-to" name="time_to" class="form-select">
+                <option value="">Сначала выберите время от</option>
+            </select>
+            {% if form.time_to.errors %}
+                <div class="text-danger">{{ form.time_to.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_guests_count" class="form-label">Количество гостей</label>
+            {{ form.guests_count }}
+            {% if form.guests_count.errors %}
+                <div class="text-danger">{{ form.guests_count.errors }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-success">Забронировать</button>
+    </form>
+</div>
+
+<script>
+  const tableId = "{{ table.id }}";
+  const dateField = document.getElementById("id_date");
+  const timeFromSelect = document.getElementById("time-from");
+  const timeToSelect = document.getElementById("time-to");
+  const guestsCountInput = document.getElementById("id_guests_count");
+
+  dateField.addEventListener('change', function() {
+      const selectedDate = dateField.value;
+      if (!selectedDate) return;
+      fetch(`/booking/ajax/get_from_times/?table_id=${tableId}&date=${selectedDate}`)
+        .then(response => response.json())
+        .then(data => {
+            timeFromSelect.innerHTML = '<option value="">Выберите время от</option>';
+            if (data.slots) {
+                data.slots.forEach(slot => {
+                    const opt = document.createElement('option');
+                    opt.value = slot;
+                    opt.textContent = slot;
+                    timeFromSelect.appendChild(opt);
+                });
+            }
+            // Очистим time-to
+            timeToSelect.innerHTML = '<option value="">Сначала выберите время от</option>';
+        });
+  });
+
+  timeFromSelect.addEventListener('change', function() {
+      const selectedDate = dateField.value;
+      const selectedFrom = timeFromSelect.value;
+      if (!selectedDate || !selectedFrom) return;
+      fetch(`/booking/ajax/get_to_times/?table_id=${tableId}&date=${selectedDate}&time_from=${selectedFrom}`)
+        .then(response => response.json())
+        .then(data => {
+            timeToSelect.innerHTML = '<option value="">Выберите время до</option>';
+            if (data.slots) {
+                data.slots.forEach(slot => {
+                    const opt = document.createElement('option');
+                    opt.value = slot;
+                    opt.textContent = slot;
+                    timeToSelect.appendChild(opt);
+                });
+            }
+        });
+  });
+
+  // Клиентская валидация количества гостей
+  document.querySelector('form').addEventListener('submit', function(e) {
+      const guests = parseInt(guestsCountInput.value, 10);
+      const maxGuests = parseInt(guestsCountInput.getAttribute('max'), 10);
+      if (isNaN(guests) || guests < 1 || guests > maxGuests) {
+          e.preventDefault();
+          alert(`Количество гостей должно быть от 1 до ${maxGuests}.`);
+      }
+  });
+</script>
+{% endblock %}
